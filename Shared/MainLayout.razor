@@ -1,0 +1,86 @@
+@using FastChat.Models;
+@using static FastChat.Services.FastChatCaller;
+@inherits LayoutComponentBase
+<RadzenDialog />
+<RadzenNotification />
+<RadzenTooltip />
+<RadzenContextMenu />
+
+<RadzenLayout style="grid-template-areas: 'rz-sidebar rz-header' 'rz-sidebar rz-body';">
+    <RadzenBody>
+        <RadzenRow class="rz-mx-auto rz-px-4 rz-pt-2 rz-pt-md-4 rz-pt-lg-6 rz-pt-xl-12 rz-pb-2 rz-pb-lg-12" Style="max-width: 1440px;">
+            <RadzenColumn Size="12">
+                @if (Messages.Count == 0)
+                {
+                    @Body
+                }
+                else
+                {
+                    foreach (var msg in Messages)
+                    {
+                        <RadzenRow JustifyContent=@(msg.Side.Contains("end") ? JustifyContent.End : JustifyContent.Start)>
+                            <RadzenColumn Size="11" SizeMD="6">
+                                <RadzenCard class="my-4 w-100">
+                                    <RadzenRow Gap="5" RowGap="5" class=@("position-relative " + msg.Side)>
+                                        <RadzenColumn Size="12">
+                                            @if (msg.Message is Deputat deputat)
+                                            {
+                                                <RadzenRow>
+                                                    <h2>@deputat.Name</h2>
+                                                    <RadzenColumn Size="12" SizeMD="4">
+                                                        <img src="@deputat.PhotoUrl" style="width: 100%" />
+                                                    </RadzenColumn>
+                                                    <RadzenColumn Size="12" SizeMD="8">
+                                                        @{
+                                                            var votes = deputat.Votes.GroupBy(x => x.Vote, (key, value) => new VoteCounter
+                                                        {
+                                                            Name = key,
+                                                            Count = value.Count()
+                                                        });
+                                                        }
+                                                        <RadzenChart>
+                                                            <RadzenPieSeries Data="@votes" Title="Голосов" CategoryProperty="Name" ValueProperty="Count">
+                                                                <RadzenSeriesDataLabels />
+                                                            </RadzenPieSeries>
+                                                        </RadzenChart>
+                                                    </RadzenColumn>
+                                                </RadzenRow>
+
+                                            }
+                                            else if (msg.Message is MarkupString)
+                                            {
+                                                @((MarkupString)msg.Message)
+                                            }
+                                            else if(msg.Message is RouteVm routeVm)
+                                            {
+                                                <p>
+                                                    Я думаю вам стоит зайти в раздел <a href=@routeVm.Url>"@routeVm.Name"</a>.
+                                                    @phrases[Random.Shared.Next(phrases.Count)]
+                                                </p>
+                                            }
+                                            else
+                                            {
+                                                @msg.Message
+                                            }
+                                        </RadzenColumn>
+                                    </RadzenRow>
+                                </RadzenCard>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                    }
+                }
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenBody>
+    <div class="position-fixed bottom-0 p-3 w-100">
+        <RadzenRow>
+            <RadzenTextBox class="col-12"
+                           Placeholder="Введите текст..."
+                           Change=@(args => OnChange(args))
+                           @bind-Value=@Message />
+        </RadzenRow>
+
+    </div>
+
+</RadzenLayout>
